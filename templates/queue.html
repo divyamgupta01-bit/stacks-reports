@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}{{ heading }}{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>{{ heading }}</h1>
+  {% if not mine_view %}
+    <a href="{{ url_for('tasks.queue', show_all=1) if not show_all else url_for('tasks.queue') }}" class="hint">
+      {{ 'Show open only' if show_all else 'Show all (including closed)' }}
+    </a>
+  {% endif %}
+</div>
+
+{% if not mine_view %}
+<div class="quick-filters">
+  <a class="quick-filter {{ 'active' if not request.args.get('status') and not request.args.get('unassigned') and not request.args.get('overdue') and not request.args.get('severity') and not show_all }}" href="{{ url_for('tasks.queue') }}">Open</a>
+  <a class="quick-filter {{ 'active' if request.args.get('unassigned') == '1' }}" href="{{ url_for('tasks.queue', unassigned=1) }}">Unassigned</a>
+  {% if top_severity %}
+  <a class="quick-filter {{ 'active' if request.args.get('severity') == top_severity }}" href="{{ url_for('tasks.queue', severity=top_severity) }}">{{ top_severity }} severity</a>
+  {% endif %}
+  <a class="quick-filter {{ 'active' if request.args.get('overdue') == '1' }}" href="{{ url_for('tasks.queue', overdue=1) }}">Overdue</a>
+</div>
+
+{% if active_filters %}
+<div class="active-filters">
+  <span>Filtered by:</span>
+  {% for label, remove_url in active_filters %}
+  <span class="filter-chip">{{ label }} <a href="{{ url_for('tasks.queue') }}{{ remove_url }}" title="Remove this filter">&times;</a></span>
+  {% endfor %}
+</div>
+{% endif %}
+
+<form method="get" class="filter-bar">
+  {% if show_all %}<input type="hidden" name="show_all" value="1">{% endif %}
+  <div class="field">
+    <label for="location_id">Location</label>
+    <select name="location_id" id="location_id" onchange="this.form.submit()">
+      <option value="">All locations</option>
+      {% for l in locations %}
+        <option value="{{ l.id }}" {{ 'selected' if request.args.get('location_id') == l.id|string }}>{{ l.display_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="category">Category</label>
+    <select name="category" id="category" onchange="this.form.submit()">
+      <option value="">All categories</option>
+      {% for c in categories %}
+        <option value="{{ c }}" {{ 'selected' if request.args.get('category') == c }}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="severity">Severity</label>
+    <select name="severity" id="severity" onchange="this.form.submit()">
+      <option value="">Any severity</option>
+      {% for s in severities %}
+        <option value="{{ s }}" {{ 'selected' if request.args.get('severity') == s }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="status">Status</label>
+    <select name="status" id="status" onchange="this.form.submit()">
+      <option value="">{{ 'All statuses' if show_all else 'Open statuses' }}</option>
+      {% for s in statuses %}
+        <option value="{{ s }}" {{ 'selected' if request.args.get('status') == s }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+</form>
+{% endif %}
+
+{% if tasks %}
+<table class="ledger">
+  <thead>
+    <tr>
+      <th>Task</th>
+      <th>Category</th>
+      <th>Location</th>
+      <th>Severity</th>
+      <th>Status</th>
+      <th>Owner</th>
+      <th>Filed</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in tasks %}
+    <tr>
+      <td class="call">{{ t.task_number }}</td>
+      <td><a class="row-link" href="{{ url_for('tasks.task_detail', task_id=t.id) }}?back={{ back }}">{{ t.category }}</a></td>
+      <td>{{ t.location.display_name }}</td>
+      <td><span class="tag tag-severity-{{ t.severity|lower }}">{{ t.severity }}</span></td>
+      <td><span class="tag tag-status-{{ t.status|lower|replace(' ', '_') }}">{{ t.status }}</span></td>
+      <td>{{ t.owner.full_name if t.owner else '—' }}</td>
+      <td>{{ t.created_at | local_dt('%b %d') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty-state">
+  <p>Nothing here right now.</p>
+</div>
+{% endif %}
+{% endblock %}

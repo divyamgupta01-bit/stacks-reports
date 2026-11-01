@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-head"><h1>Supervisor dashboard</h1></div>
+
+<div class="stat-strip">
+  <a class="stat" href="{{ url_for('tasks.queue') }}"><span class="num">{{ open_count }}</span><span class="label">Open tasks</span></a>
+  <a class="stat {{ 'stat-warn' if overdue_count }}" href="{{ url_for('tasks.queue', overdue=1) }}"><span class="num">{{ overdue_count }}</span><span class="label">Overdue</span></a>
+  <a class="stat {{ 'stat-warn' if high_open_count }}" href="{{ url_for('tasks.queue', severity=high_severity_label) if high_severity_label else url_for('tasks.queue') }}"><span class="num">{{ high_open_count }}</span><span class="label">{{ high_severity_label or 'High' }} severity open</span></a>
+  <a class="stat" href="{{ url_for('tasks.queue', unassigned=1) }}"><span class="num">{{ unassigned_count }}</span><span class="label">Unassigned</span></a>
+  <a class="stat" href="{{ url_for('tasks.queue', show_all=1, status='Resolved') }}"><span class="num">{{ resolved_this_week }}</span><span class="label">Resolved this week</span></a>
+</div>
+
+<div style="display:flex; gap:40px; flex-wrap:wrap;">
+  <div style="flex:1; min-width:320px;">
+    <h3>Open work by category</h3>
+    {% if by_category %}
+      {% for cat, count in by_category %}
+      <div class="bar-row">
+        <span class="bar-label">{{ cat }}</span>
+        <div class="bar-track"><div class="bar-fill" style="width: {{ (count / max_category_count * 100)|round }}%;"></div></div>
+        <span class="bar-count">{{ count }}</span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="hint">Nothing open.</p>
+    {% endif %}
+  </div>
+
+  <div style="flex:1; min-width:320px;">
+    <h3>Open work by location</h3>
+    {% if by_location %}
+      {% for loc, count in by_location %}
+      <div class="bar-row">
+        <span class="bar-label">{{ loc }}</span>
+        <div class="bar-track"><div class="bar-fill" style="width: {{ (count / max_location_count * 100)|round }}%;"></div></div>
+        <span class="bar-count">{{ count }}</span>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="hint">Nothing open.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="section-gap">
+  <h3>Needs attention</h3>
+  {% if attention_rows %}
+  <table class="ledger">
+    <thead><tr><th>Task</th><th>Category</th><th>Location</th><th>Status</th><th>Due</th><th>Why</th></tr></thead>
+    <tbody>
+      {% for t, reasons in attention_rows %}
+      <tr>
+        <td class="call">{{ t.task_number }}</td>
+        <td><a class="row-link" href="{{ url_for('tasks.task_detail', task_id=t.id) }}">{{ t.category }}</a></td>
+        <td>{{ t.location.display_name }}</td>
+        <td><span class="tag tag-status-{{ t.status|lower|replace(' ', '_') }}">{{ t.status }}</span></td>
+        <td>{% if t.due_date %}{% if t.due_date < today %}<span style="color:var(--status-red); font-weight:600;">{{ t.due_date.strftime('%b %d') }}</span>{% else %}{{ t.due_date.strftime('%b %d') }}{% endif %}{% else %}—{% endif %}</td>
+        <td>{% for r in reasons %}<span class="tag tag-severity-high" style="margin-right:4px;">{{ r }}</span>{% endfor %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="attention-empty">Nothing overdue, high severity, or unassigned right now.</div>
+  {% endif %}
+</div>
+{% endblock %}

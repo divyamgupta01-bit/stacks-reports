@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Locations{% endblock %}
+
+{% block content %}
+<div class="page-head"><h1>Locations</h1></div>
+
+<table class="roster">
+  <thead><tr><th>Name</th><th>Building / Floor</th><th>Zone</th><th>Status</th><th>QR codes</th><th></th></tr></thead>
+  <tbody>
+    {% for l in locations %}
+    <tr>
+      <td>{{ l.name }}</td>
+      <td>{{ l.building or '—' }} {{ l.floor or '' }}</td>
+      <td>{{ l.zone_description or '—' }}</td>
+      <td><span class="tag {{ 'tag-status-new' if l.active else 'tag-status-cancelled' }}">{{ 'Active' if l.active else 'Inactive' }}</span></td>
+      <td><a href="{{ url_for('admin.qrcodes', location_id=l.id) }}">Manage ({{ l.qr_codes|length }})</a></td>
+      <td>
+        <form method="POST" action="{{ url_for('admin.toggle_location', location_id=l.id) }}">
+          <button type="submit" class="btn btn-ghost btn-sm">{{ 'Deactivate' if l.active else 'Activate' }}</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="divider-label">Add a location</div>
+<form method="POST" style="max-width: 460px;">
+  <div class="field"><label for="name">Name</label><input type="text" id="name" name="name" placeholder="e.g. 3rd Floor — East Stacks" required></div>
+  <div class="field"><label for="building">Building</label><input type="text" id="building" name="building"></div>
+  <div class="field"><label for="floor">Floor</label><input type="text" id="floor" name="floor"></div>
+  <div class="field"><label for="zone_description">Zone / call-number range</label><input type="text" id="zone_description" name="zone_description" placeholder="e.g. PR–PS"></div>
+  <button type="submit" class="btn btn-primary">Add location</button>
+</form>
+{% endblock %}

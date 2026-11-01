@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in · Stack Maintenance Reports</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
+</head>
+<body>
+  <div class="login-screen">
+    <div class="login-card">
+      <span class="mark">Z 731 .S73</span>
+      <h1>Stack Maintenance</h1>
+      <p class="sub">Pick your name and enter your PIN to continue.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flashes">
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% if people %}
+      <form method="POST">
+        <div class="field">
+          <label for="user_id">Name</label>
+          <select id="user_id" name="user_id" required autofocus>
+            <option value="" disabled selected>Select your name</option>
+            {% for person in people %}
+              <option value="{{ person.id }}">{{ person.full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="pin">PIN</label>
+          <input type="password" id="pin" name="pin" inputmode="numeric" pattern="[0-9]{4}"
+                 maxlength="4" placeholder="Last 4 of your student ID" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Sign in</button>
+      </form>
+      {% else %}
+        <p class="hint">No accounts have been set up yet. Ask whoever installed this to run
+        <code>flask init-db</code> to create the first admin account.</p>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

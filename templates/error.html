@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ code }} · Stack Maintenance Reports</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
+</head>
+<body>
+  <div class="login-screen">
+    <div class="login-card">
+      <span class="mark">{{ code }}</span>
+      <h1>{{ message }}</h1>
+      <a href="{{ url_for('tasks.queue') }}" class="btn btn-ghost" style="text-align:center;">Back to queue</a>
+    </div>
+  </div>
+</body>
+</html>

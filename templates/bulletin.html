@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Bulletin board{% endblock %}
+
+{% block content %}
+<div class="page-head"><h1>Bulletin board</h1></div>
+<p class="hint" style="max-width:600px;">Current priorities and recent progress, at a glance — no reporter details or internal notes shown here.</p>
+
+<div class="divider-label section-gap">Current priorities</div>
+{% if open_tasks %}
+<table class="ledger">
+  <thead><tr><th>Task</th><th>Category</th><th>Location</th><th>Severity</th><th>Status</th></tr></thead>
+  <tbody>
+    {% for t in open_tasks %}
+    <tr>
+      <td class="call">{{ t.task_number }}</td>
+      <td>{{ t.category }}</td>
+      <td>{{ t.location.display_name }}</td>
+      <td><span class="tag tag-severity-{{ t.severity|lower }}">{{ t.severity }}</span></td>
+      <td><span class="tag tag-status-{{ t.status|lower|replace(' ', '_') }}">{{ t.status }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty-state"><p>Nothing open right now.</p></div>
+{% endif %}
+
+<div class="divider-label section-gap">Recently completed</div>
+{% if recently_done %}
+<table class="ledger">
+  <thead><tr><th>Task</th><th>Category</th><th>Location</th><th>Completed</th></tr></thead>
+  <tbody>
+    {% for t in recently_done %}
+    <tr>
+      <td class="call">{{ t.task_number }}</td>
+      <td>{{ t.category }}</td>
+      <td>{{ t.location.display_name }}</td>
+      <td>{{ t.updated_at | local_dt('%b %d') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty-state"><p>Nothing completed in the last two weeks.</p></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Report options{% endblock %}
+
+{% block content %}
+<div class="page-head"><h1>Report options</h1></div>
+<p class="hint" style="max-width:640px;">
+  These are the lists people pick from when filing a report — quick report
+  types, follow-up categories, and severities. Deactivating an option
+  hides it from new reports without touching any task or report that
+  already used it. Reordering changes where it shows up in the dropdown
+  (severities are ordered least to most urgent, and that order also drives
+  which tasks sort to the top of the queue and bulletin board).
+</p>
+
+<h2 style="margin-top:28px;">Quick report types</h2>
+<table class="roster">
+  <thead><tr><th>Label</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+    {% for t in quick_types %}
+    <tr>
+      <td>{{ t.label }}</td>
+      <td><span class="tag {{ 'tag-status-new' if t.active else 'tag-status-cancelled' }}">{{ 'Active' if t.active else 'Inactive' }}</span></td>
+      <td>
+        <div class="inline-form">
+          <form method="POST" action="{{ url_for('admin.move_quick_type', item_id=t.id) }}">
+            <input type="hidden" name="direction" value="up">
+            <button type="submit" class="btn btn-ghost btn-sm" {{ 'disabled' if loop.first }}>&uarr;</button>
+          </form>
+          <form method="POST" action="{{ url_for('admin.move_quick_type', item_id=t.id) }}">
+            <input type="hidden" name="direction" value="down">
+            <button type="submit" class="btn btn-ghost btn-sm" {{ 'disabled' if loop.last }}>&darr;</button>
+          </form>
+          <form method="POST" action="{{ url_for('admin.toggle_quick_type', item_id=t.id) }}">
+            <button type="submit" class="btn btn-ghost btn-sm">{{ 'Deactivate' if t.active else 'Activate' }}</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3" class="hint">None yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<form method="POST" action="{{ url_for('admin.add_quick_type') }}" class="inline-form" style="max-width:520px;">
+  <input type="text" name="label" placeholder="e.g. Spill wiped up" required style="flex:1;">
+  <button type="submit" class="btn btn-primary btn-sm">Add</button>
+</form>
+
+<h2 class="section-gap" style="margin-top:32px;">Follow-up categories</h2>
+<table class="roster">
+  <thead><tr><th>Label</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+    {% for c in categories %}
+    <tr>
+      <td>{{ c.label }}</td>
+      <td><span class="tag {{ 'tag-status-new' if c.active else 'tag-status-cancelled' }}">{{ 'Active' if c.active else 'Inactive' }}</span></td>
+      <td>
+        <div class="inline-form">
+          <form method="POST" action="{{ url_for('admin.move_category', item_id=c.id) }}">
+            <input type="hidden" name="direction" value="up">
+            <button type="submit" class="btn btn-ghost btn-sm" {{ 'disabled' if loop.first }}>&uarr;</button>
+          </form>
+          <form method="POST" action="{{ url_for('admin.move_category', item_id=c.id) }}">
+            <input type="hidden" name="direction" value="down">
+            <button type="submit" class="btn btn-ghost btn-sm" {{ 'disabled' if loop.last }}>&darr;</button>
+          </form>
+          <form method="POST" action="{{ url_for('admin.toggle_category', item_id=c.id) }}">
+            <button type="submit" class="btn btn-ghost btn-sm">{{ 'Deactivate' if c.active else 'Activate' }}</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="3" class="hint">None yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<form method="POST" action="{{ url_for('admin.add_category') }}" class="inline-form" style="max-width:520px;">
+  <input type="text" name="label" placeholder="e.g. Pest sighting" required style="flex:1;">
+  <button type="submit" class="btn btn-primary btn-sm">Add</button>
+</form>
+
+<h2 class="section-gap" style="margin-top:32px;">Severities</h2>
+<table class="roster">
+  <thead><tr><th>Label</th><th>Meaning</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+    {% for s in severities %}
+    <tr>
+      <td>{{ s.label }}</td>
+      <td class="hint">{{ s.meaning or '—' }}</td>
+      <td><span class="tag {{ 'tag-status-new' if s.active else 'tag-status-cancelled' }}">{{ 'Active' if s.active else 'Inactive' }}</span></td>
+      <td>
+        <div class="inline-form">
+          <form method="POST" action="{{ url_for('admin.move_severity', item_id=s.id) }}">
+            <input type="hidden" name="direction" value="up">
+            <button type="submit" class="btn btn-ghost btn-sm" {{ 'disabled' if loop.first }}>&uarr;</button>
+          </form>
+          <form method="POST" action="{{ url_for('admin.move_severity', item_id=s.id) }}">
+            <input type="hidden" name="direction" value="down">
+            <button type="submit" class="btn btn-ghost btn-sm" {{ 'disabled' if loop.last }}>&darr;</button>
+          </form>
+          <form method="POST" action="{{ url_for('admin.toggle_severity', item_id=s.id) }}">
+            <button type="submit" class="btn btn-ghost btn-sm">{{ 'Deactivate' if s.active else 'Activate' }}</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="hint">None yet.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<form method="POST" action="{{ url_for('admin.add_severity') }}" style="max-width:520px;">
+  <div class="field"><label for="sev-label">Label</label><input type="text" id="sev-label" name="label" placeholder="e.g. Critical" required></div>
+  <div class="field"><label for="sev-meaning">Meaning (optional)</label><input type="text" id="sev-meaning" name="meaning" placeholder="When to use this severity"></div>
+  <button type="submit" class="btn btn-primary btn-sm">Add severity</button>
+</form>
+{% endblock %}

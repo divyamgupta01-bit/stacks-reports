@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Follow-up report{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Report an issue for follow-up</h1>
+</div>
+
+{% if location %}
+  <div class="location-banner">
+    <div class="label">Location</div>
+    <div class="value">{{ location.display_name }}</div>
+  </div>
+{% else %}
+  <div class="location-banner missing">
+    <div class="label">No location detected</div>
+    <div class="hint">Go back and scan a QR code, or pick a location on the report page first.</div>
+  </div>
+{% endif %}
+
+{% if possible_matches %}
+  <div class="location-banner missing" style="border-left-color: var(--brass);">
+    <div class="label">Possible existing report{{ 's' if possible_matches|length > 1 }} for this location</div>
+    <p class="hint" style="margin: 6px 0 0 0;">If this is the same issue as one already being tracked, link to it instead of creating a duplicate.</p>
+  </div>
+{% endif %}
+
+<form method="POST" enctype="multipart/form-data">
+  {% if qr %}
+    <input type="hidden" name="qr_token" value="{{ qr.token }}">
+  {% elif location %}
+    <input type="hidden" name="location_id" value="{{ location.id }}">
+  {% endif %}
+
+  {% if possible_matches %}
+  <div class="field" style="max-width: 560px;">
+    <label for="link_to_task_id">Link to an existing open task instead? (optional)</label>
+    <select name="link_to_task_id" id="link_to_task_id">
+      <option value="" selected>No — this is a new issue</option>
+      {% for t in possible_matches %}
+        <option value="{{ t.id }}">{{ t.task_number }} — {{ t.category }} ({{ t.status }})</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+
+  <div class="field">
+    <label for="category">Category</label>
+    <select name="category" id="category" required>
+      <option value="" disabled {{ 'selected' if not form.get('category') }}>Select a category</option>
+      {% for c in categories %}
+        <option value="{{ c }}" {{ 'selected' if form.get('category') == c }}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="severity">Severity</label>
+    <select name="severity" id="severity">
+      {% for s in severities %}
+        <option value="{{ s }}" {{ 'selected' if form.get('severity', 'Normal') == s }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <p class="hint">Low: normal queue. Normal: next work cycle. High: notify/assign promptly.</p>
+  </div>
+
+  <div class="field" style="max-width: 600px;">
+    <label for="description">Description</label>
+    <textarea id="description" name="description" required
+      placeholder="What's the issue? Include anything Stack Maintenance needs to know before heading over.">{{ form.get('description', '') }}</textarea>
+  </div>
+
+  <div class="field">
+    <label for="quantity_estimate">Approximate amount affected (optional)</label>
+    <input type="text" id="quantity_estimate" name="quantity_estimate" placeholder="e.g. two ranges, one large cart"
+           value="{{ form.get('quantity_estimate', '') }}">
+  </div>
+
+  <div class="field">
+    <label for="call_number_range">Related call-number range (optional)</label>
+    <input type="text" id="call_number_range" name="call_number_range" placeholder="e.g. PR 4500–4800"
+           value="{{ form.get('call_number_range', '') }}">
+  </div>
+
+  <div class="field">
+    <label for="work_order_ref">Facilities work order # (optional, if already started)</label>
+    <input type="text" id="work_order_ref" name="work_order_ref" value="{{ form.get('work_order_ref', '') }}">
+  </div>
+
+  <div class="field">
+    <label for="photo">Photo (optional)</label>
+    <input type="file" id="photo" name="photo" accept="image/png,image/jpeg,image/gif,image/webp">
+  </div>
+
+  <p class="hint" style="max-width:560px; margin-bottom:18px;">
+    This isn't a replacement for Library emergency procedures. For anything
+    urgent involving safety, follow the Library's normal emergency contact
+    process in addition to filing this report.
+  </p>
+
+  <button type="submit" class="btn btn-primary">File follow-up</button>
+</form>
+{% endblock %}

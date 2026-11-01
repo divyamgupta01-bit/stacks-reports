@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Report log{% endblock %}
+
+{% block content %}
+<div class="page-head"><h1>Report log</h1></div>
+<p class="hint" style="max-width:640px;">
+  Every report filed, newest first — completed quick logs and the follow-ups
+  that became tasks. A photo attached to a completed quick report only shows
+  up here, since it's not attached to any task.
+</p>
+
+{% if reports %}
+<table class="ledger">
+  <thead>
+    <tr>
+      <th>When</th>
+      <th>Reporter</th>
+      <th>Location</th>
+      <th>Type</th>
+      <th>Note</th>
+      <th>Photo</th>
+      <th>Task</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in reports %}
+    <tr>
+      <td>{{ r.submitted_at | local_dt('%b %d, %I:%M %p') }}</td>
+      <td>{{ r.reporter.full_name }}</td>
+      <td>{{ r.location.display_name }}</td>
+      <td>{{ r.report_type }}</td>
+      <td>{{ r.notes or '—' }}</td>
+      <td>
+        {% if r.attachments %}
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          {% for a in r.attachments %}
+          <a href="{{ a.url }}" target="_blank" title="{{ a.caption or a.original_filename or '' }}">
+            <img src="{{ a.url }}" alt="Attached photo"
+                 style="width:56px; height:56px; object-fit:cover; border:1px solid var(--rule);">
+          </a>
+          {% endfor %}
+          </div>
+        {% else %}—{% endif %}
+      </td>
+      <td>
+        {% if r.task %}
+          <a class="row-link" href="{{ url_for('tasks.task_detail', task_id=r.task.id) }}">{{ r.task.task_number }}</a>
+        {% else %}—{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty-state"><p>No reports filed yet.</p></div>
+{% endif %}
+{% endblock %}
