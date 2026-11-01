@@ -1,45 +1,61 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}QR codes — {{ location.name }}{% endblock %}
 
 {% block content %}
 <div class="page-head">
-  <h1>QR codes — {{ location.name }}</h1>
-  <a href="{{ url_for('admin.locations') }}" class="hint">&larr; Back to locations</a>
+  <div>
+    <a href="{{ url_for('admin.locations') }}" class="back-link">{{ icon('arrow-left') }} Back to locations</a>
+    <h1>QR codes</h1>
+    <p class="page-sub">{{ location.name }}</p>
+  </div>
 </div>
 
-<p class="hint" style="max-width:600px;">
-  Each code below links straight to a pre-filled report form for this
+<div class="callout callout-info">
+  {{ icon('info') }}
+  <p>Each code below links straight to a pre-filled report form for this
   location. Turn the URL into a printable QR image with any QR generator for
-  now — automatic printable sign sheets are planned for a later phase.
-</p>
+  now — automatic printable sign sheets are planned for a later phase.</p>
+</div>
 
-{% if codes %}
-  {% for qr in codes %}
-  <div class="qr-card">
-    <div style="flex:1;">
-      <strong>{{ qr.label }}</strong>
-      <span class="tag {{ 'tag-status-new' if qr.active else 'tag-status-cancelled' }}" style="margin-left:8px;">{{ 'Active' if qr.active else 'Inactive' }}</span>
-      <div class="url">{{ report_base_url }}?qr={{ qr.token }}</div>
-      <div class="hint">
-        Created {{ qr.created_at | local_dt('%b %d, %Y') }}
-        {% if qr.last_scanned_at %} · last scanned {{ qr.last_scanned_at | local_dt('%b %d, %I:%M %p') }}{% else %} · never scanned{% endif %}
+<div class="admin-layout">
+  <div>
+  {% if codes %}
+    <div class="qr-list">
+    {% for qr in codes %}
+    <div class="qr-card {{ 'is-inactive' if not qr.active }}">
+      <span class="qr-icon">{{ icon('qr') }}</span>
+      <div class="qr-body">
+        <div class="qr-title">
+          <strong>{{ qr.label }}</strong>
+          <span class="tag {{ 'tag-status-resolved' if qr.active else 'tag-status-cancelled' }}">{{ 'Active' if qr.active else 'Inactive' }}</span>
+        </div>
+        <div class="url">{{ report_base_url }}?qr={{ qr.token }}</div>
+        <div class="hint">
+          Created {{ qr.created_at | local_dt('%b %d, %Y') }}
+          {% if qr.last_scanned_at %} · last scanned {{ qr.last_scanned_at | local_dt('%b %d, %I:%M %p') }}{% else %} · never scanned{% endif %}
+        </div>
       </div>
+      <form method="POST" action="{{ url_for('admin.toggle_qrcode', qr_id=qr.id) }}">
+        <button type="submit" class="btn btn-ghost btn-sm">{{ 'Deactivate' if qr.active else 'Activate' }}</button>
+      </form>
     </div>
-    <form method="POST" action="{{ url_for('admin.toggle_qrcode', qr_id=qr.id) }}">
-      <button type="submit" class="btn btn-ghost btn-sm">{{ 'Deactivate' if qr.active else 'Activate' }}</button>
-    </form>
+    {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state"><span class="empty-icon">{{ icon('qr') }}</span><p>No QR codes yet for this location.</p></div>
+  {% endif %}
   </div>
-  {% endfor %}
-{% else %}
-  <div class="empty-state"><p>No QR codes yet for this location.</p></div>
-{% endif %}
 
-<div class="divider-label section-gap">Generate a new code</div>
-<form method="POST" style="max-width: 420px;">
-  <div class="field">
-    <label for="label">Label (optional)</label>
-    <input type="text" id="label" name="label" placeholder="{{ location.name }}">
-  </div>
-  <button type="submit" class="btn btn-primary">Generate QR code</button>
-</form>
+  <section class="card form-card">
+    <div class="card-title">{{ icon('plus') }} Generate a new code</div>
+    <form method="POST">
+      <div class="field">
+        <label for="label">Label (optional)</label>
+        <input type="text" id="label" name="label" placeholder="{{ location.name }}">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">{{ icon('qr') }} Generate QR code</button>
+    </form>
+  </section>
+</div>
 {% endblock %}

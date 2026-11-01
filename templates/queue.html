@@ -1,78 +1,94 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ heading }}{% endblock %}
 
 {% block content %}
 <div class="page-head">
-  <h1>{{ heading }}</h1>
-  {% if not mine_view %}
-    <a href="{{ url_for('tasks.queue', show_all=1) if not show_all else url_for('tasks.queue') }}" class="hint">
-      {{ 'Show open only' if show_all else 'Show all (including closed)' }}
-    </a>
-  {% endif %}
+  <div>
+    <h1>{{ heading }}</h1>
+    <p class="page-sub">
+      {% if mine_view %}Tasks currently assigned to you.{% else %}Everything reported for follow-up, most urgent first.{% endif %}
+    </p>
+  </div>
+  <div class="page-actions">
+    {% if not mine_view %}
+      <a href="{{ url_for('tasks.queue', show_all=1) if not show_all else url_for('tasks.queue') }}" class="btn btn-ghost btn-sm">
+        {{ icon('layers') }} {{ 'Show open only' if show_all else 'Show all (including closed)' }}
+      </a>
+    {% endif %}
+    <a href="{{ url_for('reports.quick_report') }}" class="btn btn-primary btn-sm hide-mobile">{{ icon('plus') }} File a report</a>
+  </div>
 </div>
 
 {% if not mine_view %}
-<div class="quick-filters">
-  <a class="quick-filter {{ 'active' if not request.args.get('status') and not request.args.get('unassigned') and not request.args.get('overdue') and not request.args.get('severity') and not show_all }}" href="{{ url_for('tasks.queue') }}">Open</a>
-  <a class="quick-filter {{ 'active' if request.args.get('unassigned') == '1' }}" href="{{ url_for('tasks.queue', unassigned=1) }}">Unassigned</a>
-  {% if top_severity %}
-  <a class="quick-filter {{ 'active' if request.args.get('severity') == top_severity }}" href="{{ url_for('tasks.queue', severity=top_severity) }}">{{ top_severity }} severity</a>
-  {% endif %}
-  <a class="quick-filter {{ 'active' if request.args.get('overdue') == '1' }}" href="{{ url_for('tasks.queue', overdue=1) }}">Overdue</a>
+<div class="toolbar">
+  <div class="quick-filters" role="tablist">
+    <a class="quick-filter {{ 'active' if not request.args.get('status') and not request.args.get('unassigned') and not request.args.get('overdue') and not request.args.get('severity') and not show_all }}" href="{{ url_for('tasks.queue') }}">{{ icon('inbox') }} Open</a>
+    <a class="quick-filter {{ 'active' if request.args.get('unassigned') == '1' }}" href="{{ url_for('tasks.queue', unassigned=1) }}">{{ icon('user') }} Unassigned</a>
+    {% if top_severity %}
+    <a class="quick-filter {{ 'active' if request.args.get('severity') == top_severity }}" href="{{ url_for('tasks.queue', severity=top_severity) }}">{{ icon('alert') }} {{ top_severity }} severity</a>
+    {% endif %}
+    <a class="quick-filter {{ 'active' if request.args.get('overdue') == '1' }}" href="{{ url_for('tasks.queue', overdue=1) }}">{{ icon('clock') }} Overdue</a>
+  </div>
+
+  <details class="filter-drawer" {{ 'open' if active_filters }}>
+    <summary class="btn btn-ghost btn-sm">{{ icon('filter') }} Filters{% if active_filters %} <span class="badge-count">{{ active_filters|length }}</span>{% endif %}</summary>
+    <form method="get" class="filter-bar">
+      {% if show_all %}<input type="hidden" name="show_all" value="1">{% endif %}
+      <div class="field">
+        <label for="location_id">Location</label>
+        <select name="location_id" id="location_id" onchange="this.form.submit()">
+          <option value="">All locations</option>
+          {% for l in locations %}
+            <option value="{{ l.id }}" {{ 'selected' if request.args.get('location_id') == l.id|string }}>{{ l.display_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="category">Category</label>
+        <select name="category" id="category" onchange="this.form.submit()">
+          <option value="">All categories</option>
+          {% for c in categories %}
+            <option value="{{ c }}" {{ 'selected' if request.args.get('category') == c }}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="severity">Severity</label>
+        <select name="severity" id="severity" onchange="this.form.submit()">
+          <option value="">Any severity</option>
+          {% for s in severities %}
+            <option value="{{ s }}" {{ 'selected' if request.args.get('severity') == s }}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label for="status">Status</label>
+        <select name="status" id="status" onchange="this.form.submit()">
+          <option value="">{{ 'All statuses' if show_all else 'Open statuses' }}</option>
+          {% for s in statuses %}
+            <option value="{{ s }}" {{ 'selected' if request.args.get('status') == s }}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </details>
 </div>
 
 {% if active_filters %}
 <div class="active-filters">
-  <span>Filtered by:</span>
+  <span class="muted">Filtered by</span>
   {% for label, remove_url in active_filters %}
-  <span class="filter-chip">{{ label }} <a href="{{ url_for('tasks.queue') }}{{ remove_url }}" title="Remove this filter">&times;</a></span>
+  <span class="filter-chip">{{ label }} <a href="{{ url_for('tasks.queue') }}{{ remove_url }}" title="Remove this filter" aria-label="Remove filter">{{ icon('x') }}</a></span>
   {% endfor %}
+  <a href="{{ url_for('tasks.queue') }}" class="clear-link">Clear all</a>
 </div>
 {% endif %}
-
-<form method="get" class="filter-bar">
-  {% if show_all %}<input type="hidden" name="show_all" value="1">{% endif %}
-  <div class="field">
-    <label for="location_id">Location</label>
-    <select name="location_id" id="location_id" onchange="this.form.submit()">
-      <option value="">All locations</option>
-      {% for l in locations %}
-        <option value="{{ l.id }}" {{ 'selected' if request.args.get('location_id') == l.id|string }}>{{ l.display_name }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="field">
-    <label for="category">Category</label>
-    <select name="category" id="category" onchange="this.form.submit()">
-      <option value="">All categories</option>
-      {% for c in categories %}
-        <option value="{{ c }}" {{ 'selected' if request.args.get('category') == c }}>{{ c }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="field">
-    <label for="severity">Severity</label>
-    <select name="severity" id="severity" onchange="this.form.submit()">
-      <option value="">Any severity</option>
-      {% for s in severities %}
-        <option value="{{ s }}" {{ 'selected' if request.args.get('severity') == s }}>{{ s }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="field">
-    <label for="status">Status</label>
-    <select name="status" id="status" onchange="this.form.submit()">
-      <option value="">{{ 'All statuses' if show_all else 'Open statuses' }}</option>
-      {% for s in statuses %}
-        <option value="{{ s }}" {{ 'selected' if request.args.get('status') == s }}>{{ s }}</option>
-      {% endfor %}
-    </select>
-  </div>
-</form>
 {% endif %}
 
 {% if tasks %}
-<table class="ledger">
+<div class="table-card">
+<table class="ledger ledger-stack ledger-tasks">
   <thead>
     <tr>
       <th>Task</th>
@@ -86,21 +102,34 @@
   </thead>
   <tbody>
     {% for t in tasks %}
-    <tr>
-      <td class="call">{{ t.task_number }}</td>
-      <td><a class="row-link" href="{{ url_for('tasks.task_detail', task_id=t.id) }}?back={{ back }}">{{ t.category }}</a></td>
-      <td>{{ t.location.display_name }}</td>
-      <td><span class="tag tag-severity-{{ t.severity|lower }}">{{ t.severity }}</span></td>
-      <td><span class="tag tag-status-{{ t.status|lower|replace(' ', '_') }}">{{ t.status }}</span></td>
-      <td>{{ t.owner.full_name if t.owner else '—' }}</td>
-      <td>{{ t.created_at | local_dt('%b %d') }}</td>
+    <tr class="sev-row-{{ t.severity|lower }}">
+      <td data-label="Task" class="call">{{ t.task_number }}</td>
+      <td data-label="Category" class="cell-title"><a class="row-link" href="{{ url_for('tasks.task_detail', task_id=t.id) }}?back={{ back }}">{{ t.category }}</a></td>
+      <td data-label="Location"><span class="with-icon">{{ icon('pin') }}{{ t.location.display_name }}</span></td>
+      <td data-label="Severity"><span class="tag tag-severity-{{ t.severity|lower }}"><i class="dot"></i>{{ t.severity }}</span></td>
+      <td data-label="Status"><span class="tag tag-status-{{ t.status|lower|replace(' ', '_') }}">{{ t.status }}</span></td>
+      <td data-label="Owner">
+        {% if t.owner %}<span class="person"><span class="avatar avatar-sm">{{ t.owner.full_name[:1] }}</span>{{ t.owner.full_name }}</span>
+        {% else %}<span class="muted">Unassigned</span>{% endif %}
+      </td>
+      <td data-label="Filed" class="nowrap muted">{{ t.created_at | local_dt('%b %d') }}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% else %}
 <div class="empty-state">
-  <p>Nothing here right now.</p>
+  <span class="empty-icon">{{ icon('check-circle') }}</span>
+  <p><strong>Nothing here right now.</strong></p>
+  <p class="muted">{% if mine_view %}No tasks are assigned to you.{% else %}No tasks match this view.{% endif %}</p>
 </div>
 {% endif %}
+<script>
+  // Filters start expanded on wide screens, tucked away on phones.
+  (function () {
+    var d = document.querySelector('.filter-drawer');
+    if (d && window.matchMedia('(min-width: 900px)').matches) d.open = true;
+  })();
+</script>
 {% endblock %}

@@ -1,58 +1,100 @@
-<!DOCTYPE html>
+{% from "_icons.html" import icon %}<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0e1a2b">
   <title>{% block title %}Stack Maintenance{% endblock %} · Stack Maintenance Reports</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3">
 </head>
 <body>
+  <input type="checkbox" id="nav-toggle" class="nav-toggle" aria-hidden="true" hidden>
   <div class="shell">
+    <header class="topbar">
+      <label for="nav-toggle" class="icon-btn" aria-label="Open menu">{{ icon('menu') }}</label>
+      <a class="topbar-brand" href="{{ url_for('tasks.queue') }}">
+        <span class="logo-mark">{{ icon('books') }}</span>
+        <span>Stack Maintenance</span>
+      </a>
+      <a class="icon-btn icon-btn-accent" href="{{ url_for('reports.quick_report') }}" aria-label="File a report">{{ icon('plus') }}</a>
+    </header>
+
+    <label for="nav-toggle" class="scrim" aria-hidden="true"></label>
+
     <aside class="rail">
       <div class="rail-brand">
-        <span class="mark">Z 731 .S73</span>
-        <span class="name">Stack Maintenance<br>Reports</span>
+        <span class="logo-mark">{{ icon('books') }}</span>
+        <div>
+          <span class="name">Stack Maintenance</span>
+          <span class="mark">Z 731 .S73</span>
+        </div>
+        <label for="nav-toggle" class="icon-btn rail-close" aria-label="Close menu">{{ icon('x') }}</label>
       </div>
+
+      <a href="{{ url_for('reports.quick_report') }}" class="rail-cta">{{ icon('plus') }} File a report</a>
+
       <nav>
-        <a href="{{ url_for('reports.quick_report') }}" class="{{ 'active' if request.endpoint == 'reports.quick_report' }}">File a report</a>
-        <a href="{{ url_for('tasks.queue') }}" class="{{ 'active' if request.endpoint == 'tasks.queue' }}">Open stack work</a>
-        <a href="{{ url_for('tasks.my_assignments') }}" class="{{ 'active' if request.endpoint == 'tasks.my_assignments' }}">My assignments</a>
-        <a href="{{ url_for('reports.report_log') }}" class="{{ 'active' if request.endpoint == 'reports.report_log' }}">Report log</a>
-        <a href="{{ url_for('tasks.bulletin') }}" class="{{ 'active' if request.endpoint == 'tasks.bulletin' }}">Bulletin board</a>
+        <div class="nav-label">Work</div>
+        <a href="{{ url_for('tasks.queue') }}" class="{{ 'active' if request.endpoint == 'tasks.queue' }}">{{ icon('inbox') }} Open stack work</a>
+        <a href="{{ url_for('tasks.my_assignments') }}" class="{{ 'active' if request.endpoint == 'tasks.my_assignments' }}">{{ icon('user') }} My assignments</a>
+        <a href="{{ url_for('reports.report_log') }}" class="{{ 'active' if request.endpoint == 'reports.report_log' }}">{{ icon('list') }} Report log</a>
+        <a href="{{ url_for('tasks.bulletin') }}" class="{{ 'active' if request.endpoint == 'tasks.bulletin' }}">{{ icon('board') }} Bulletin board</a>
         {% if current_user.is_authenticated and current_user.can_manage_queue() %}
-          <a href="{{ url_for('tasks.supervisor_dashboard') }}" class="{{ 'active' if request.endpoint == 'tasks.supervisor_dashboard' }}">Dashboard</a>
+          <a href="{{ url_for('tasks.supervisor_dashboard') }}" class="{{ 'active' if request.endpoint == 'tasks.supervisor_dashboard' }}">{{ icon('chart') }} Dashboard</a>
         {% endif %}
         {% if current_user.is_authenticated and current_user.is_admin %}
           <div class="nav-label">Admin</div>
-          <a href="{{ url_for('admin.locations') }}" class="{{ 'active' if request.endpoint in ['admin.locations', 'admin.qrcodes'] }}">Locations &amp; QR codes</a>
-          <a href="{{ url_for('admin.users') }}" class="{{ 'active' if request.endpoint == 'admin.users' }}">People</a>
-          <a href="{{ url_for('admin.config') }}" class="{{ 'active' if request.endpoint == 'admin.config' }}">Report options</a>
+          <a href="{{ url_for('admin.locations') }}" class="{{ 'active' if request.endpoint in ['admin.locations', 'admin.qrcodes'] }}">{{ icon('pin') }} Locations &amp; QR codes</a>
+          <a href="{{ url_for('admin.users') }}" class="{{ 'active' if request.endpoint == 'admin.users' }}">{{ icon('users') }} People</a>
+          <a href="{{ url_for('admin.config') }}" class="{{ 'active' if request.endpoint == 'admin.config' }}">{{ icon('sliders') }} Report options</a>
         {% endif %}
       </nav>
+
+      {% if current_user.is_authenticated %}
       <div class="rail-footer">
-        {% if current_user.is_authenticated %}
-          Signed in as<br><strong>{{ current_user.full_name }}</strong>
-          <div class="hint">{{ current_user.role_label }}</div>
-          <form action="{{ url_for('auth.logout') }}" method="get" style="display:inline">
-            <button type="submit" class="linklike">Sign out</button>
-          </form>
-        {% endif %}
+        <span class="avatar">{{ current_user.full_name[:1] }}</span>
+        <div class="who">
+          <strong>{{ current_user.full_name }}</strong>
+          <span>{{ current_user.role_label }}</span>
+        </div>
+        <form action="{{ url_for('auth.logout') }}" method="get">
+          <button type="submit" class="icon-btn" title="Sign out" aria-label="Sign out">{{ icon('logout') }}</button>
+        </form>
       </div>
+      {% endif %}
     </aside>
 
     <main class="main">
+      <div class="main-inner">
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
           <div class="flashes">
             {% for category, message in messages %}
-              <div class="flash {{ category }}">{{ message }}</div>
+              <div class="flash {{ category }}" role="status">
+                {{ icon('check-circle' if category == 'success' else ('alert' if category == 'error' else 'info')) }}
+                <span>{{ message }}</span>
+              </div>
             {% endfor %}
           </div>
         {% endif %}
       {% endwith %}
 
       {% block content %}{% endblock %}
+      </div>
     </main>
   </div>
+  <script>
+    // Show the chosen photo's filename on styled upload fields.
+    document.querySelectorAll('.dropzone input[type=file]').forEach(function (inp) {
+      inp.addEventListener('change', function () {
+        var out = inp.closest('.dropzone').querySelector('.dz-name');
+        if (out) out.textContent = inp.files.length ? inp.files[0].name : '';
+        inp.closest('.dropzone').classList.toggle('has-file', inp.files.length > 0);
+      });
+    });
+  </script>
 </body>
 </html>

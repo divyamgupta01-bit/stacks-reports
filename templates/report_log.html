@@ -1,16 +1,20 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}Report log{% endblock %}
 
 {% block content %}
-<div class="page-head"><h1>Report log</h1></div>
-<p class="hint" style="max-width:640px;">
-  Every report filed, newest first — completed quick logs and the follow-ups
-  that became tasks. A photo attached to a completed quick report only shows
-  up here, since it's not attached to any task.
-</p>
+<div class="page-head">
+  <div>
+    <h1>Report log</h1>
+    <p class="page-sub">Every report filed, newest first: completed quick logs and the follow-ups
+    that became tasks. Photos from completed quick reports only appear here.</p>
+  </div>
+  {% if reports %}<span class="count-pill">{{ reports|length }} report{{ 's' if reports|length != 1 }}</span>{% endif %}
+</div>
 
 {% if reports %}
-<table class="ledger">
+<div class="table-card">
+<table class="ledger ledger-stack">
   <thead>
     <tr>
       <th>When</th>
@@ -25,33 +29,37 @@
   <tbody>
     {% for r in reports %}
     <tr>
-      <td>{{ r.submitted_at | local_dt('%b %d, %I:%M %p') }}</td>
-      <td>{{ r.reporter.full_name }}</td>
-      <td>{{ r.location.display_name }}</td>
-      <td>{{ r.report_type }}</td>
-      <td>{{ r.notes or '—' }}</td>
-      <td>
+      <td data-label="When" class="nowrap muted">{{ r.submitted_at | local_dt('%b %d, %I:%M %p') }}</td>
+      <td data-label="Reporter"><span class="person"><span class="avatar avatar-sm">{{ r.reporter.full_name[:1] }}</span>{{ r.reporter.full_name }}</span></td>
+      <td data-label="Location">{{ r.location.display_name }}</td>
+      <td data-label="Type" class="cell-title">{{ r.report_type }}</td>
+      <td data-label="Note" class="muted">{{ r.notes or '—' }}</td>
+      <td data-label="Photo">
         {% if r.attachments %}
-          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <div class="thumbs">
           {% for a in r.attachments %}
           <a href="{{ a.url }}" target="_blank" title="{{ a.caption or a.original_filename or '' }}">
-            <img src="{{ a.url }}" alt="Attached photo"
-                 style="width:56px; height:56px; object-fit:cover; border:1px solid var(--rule);">
+            <img src="{{ a.url }}" alt="Attached photo" class="thumb">
           </a>
           {% endfor %}
           </div>
-        {% else %}—{% endif %}
+        {% else %}<span class="muted">—</span>{% endif %}
       </td>
-      <td>
+      <td data-label="Task">
         {% if r.task %}
-          <a class="row-link" href="{{ url_for('tasks.task_detail', task_id=r.task.id) }}">{{ r.task.task_number }}</a>
-        {% else %}—{% endif %}
+          <a class="task-link" href="{{ url_for('tasks.task_detail', task_id=r.task.id) }}">{{ r.task.task_number }} {{ icon('chevron-right') }}</a>
+        {% else %}<span class="muted">—</span>{% endif %}
       </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
+</div>
 {% else %}
-<div class="empty-state"><p>No reports filed yet.</p></div>
+<div class="empty-state">
+  <span class="empty-icon">{{ icon('list') }}</span>
+  <p><strong>No reports filed yet.</strong></p>
+  <a href="{{ url_for('reports.quick_report') }}" class="btn btn-primary">{{ icon('plus') }} File the first one</a>
+</div>
 {% endif %}
 {% endblock %}

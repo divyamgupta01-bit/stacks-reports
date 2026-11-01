@@ -1,75 +1,119 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}{{ task.task_number }}{% endblock %}
 
 {% block content %}
 <div class="page-head">
-  <h1>{{ task.category }}</h1>
-  <a href="{{ back_url }}" class="hint">&larr; Back to queue</a>
-</div>
-
-<div class="catalog-card">
-  <div class="catalog-head">
-    <span class="call">{{ task.task_number }}</span>
-    <div>
+  <div>
+    <a href="{{ back_url }}" class="back-link">{{ icon('arrow-left') }} Back to queue</a>
+    <div class="title-row">
+      <span class="call call-lg">{{ task.task_number }}</span>
       <span class="tag tag-status-{{ task.status|lower|replace(' ', '_') }}">{{ task.status }}</span>
-      <span class="tag tag-severity-{{ task.severity|lower }}">{{ task.severity }} severity</span>
+      <span class="tag tag-severity-{{ task.severity|lower }}"><i class="dot"></i>{{ task.severity }} severity</span>
       {% if task.duplicate_of %}<span class="tag tag-status-cancelled">Duplicate of {{ task.duplicate_of.task_number }}</span>{% endif %}
     </div>
+    <h1>{{ task.category }}</h1>
   </div>
+</div>
 
-  <div class="meta-grid">
-    <div class="meta-item"><div class="k">Location</div><div class="v">{{ task.location.display_name }}</div></div>
-    <div class="meta-item"><div class="k">Owner</div><div class="v">{{ task.owner.full_name if task.owner else 'Unassigned' }}</div></div>
-    <div class="meta-item"><div class="k">Due date</div><div class="v">{{ task.due_date.strftime('%b %d, %Y') if task.due_date else '—' }}</div></div>
-    <div class="meta-item"><div class="k">Work order</div><div class="v">{{ task.work_order_ref or '—' }}</div></div>
-    <div class="meta-item"><div class="k">Filed</div><div class="v">{{ task.created_at | local_dt('%B %d, %Y at %I:%M %p') }}</div></div>
-    <div class="meta-item"><div class="k">Last updated</div><div class="v">{{ task.updated_at | local_dt('%B %d, %Y at %I:%M %p') }}</div></div>
-  </div>
-
-  <div class="meta-item">
-    <div class="k">Notes</div>
-    <div class="description-block">{{ task.notes or 'No notes.' }}</div>
-  </div>
-
-  {% if task.reports|length > 1 %}
-  <div class="meta-item section-gap">
-    <div class="k">Reports filed against this task ({{ task.reports|length }})</div>
-    <div class="log" style="margin-top:8px;">
-      {% for r in task.reports %}
-      <div class="log-entry">
-        <span class="who">{{ r.reporter.full_name }}</span>
-        <span class="when">{{ r.submitted_at | local_dt('%b %d, %I:%M %p') }}</span>
-        <div class="body">{{ r.notes or r.report_type }}</div>
+<div class="detail-layout {{ 'has-side' if can_manage }}">
+  <div class="detail-main">
+    <section class="card">
+      <div class="meta-grid">
+        <div class="meta-item"><div class="k">{{ icon('pin') }} Location</div><div class="v">{{ task.location.display_name }}</div></div>
+        <div class="meta-item"><div class="k">{{ icon('user') }} Owner</div><div class="v">{% if task.owner %}<span class="person"><span class="avatar avatar-sm">{{ task.owner.full_name[:1] }}</span>{{ task.owner.full_name }}</span>{% else %}<span class="muted">Unassigned</span>{% endif %}</div></div>
+        <div class="meta-item"><div class="k">{{ icon('calendar') }} Due date</div><div class="v">{{ task.due_date.strftime('%b %d, %Y') if task.due_date else '—' }}</div></div>
+        <div class="meta-item"><div class="k">{{ icon('wrench') }} Work order</div><div class="v">{{ task.work_order_ref or '—' }}</div></div>
+        <div class="meta-item"><div class="k">{{ icon('clock') }} Filed</div><div class="v">{{ task.created_at | local_dt('%B %d, %Y at %I:%M %p') }}</div></div>
+        <div class="meta-item"><div class="k">{{ icon('clock') }} Last updated</div><div class="v">{{ task.updated_at | local_dt('%B %d, %Y at %I:%M %p') }}</div></div>
       </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
 
-  {% if task.resolution %}
-  <div class="meta-item section-gap">
-    <div class="k">Resolution</div>
-    <div class="description-block">{{ task.resolution }}</div>
-  </div>
-  {% endif %}
+      <div class="block">
+        <div class="k">Notes</div>
+        <div class="description-block">{{ task.notes or 'No notes.' }}</div>
+      </div>
 
-  {% if task.attachments %}
-  <div class="meta-item section-gap">
-    <div class="k">Photos</div>
-    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
-      {% for a in task.attachments %}
-      <a href="{{ a.url }}" target="_blank" title="{{ a.caption or a.original_filename or '' }}">
-        <img src="{{ a.url }}" alt="Attached photo"
-             style="width:100px; height:100px; object-fit:cover; border:1px solid var(--rule);">
-      </a>
-      {% endfor %}
-    </div>
+      {% if task.resolution %}
+      <div class="block">
+        <div class="k">Resolution</div>
+        <div class="description-block description-ok">{{ icon('check-circle') }} {{ task.resolution }}</div>
+      </div>
+      {% endif %}
+
+      {% if task.attachments %}
+      <div class="block">
+        <div class="k">Photos</div>
+        <div class="thumbs thumbs-lg">
+          {% for a in task.attachments %}
+          <a href="{{ a.url }}" target="_blank" title="{{ a.caption or a.original_filename or '' }}">
+            <img src="{{ a.url }}" alt="Attached photo" class="thumb thumb-lg">
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if task.reports|length > 1 %}
+      <div class="block">
+        <div class="k">Reports filed against this task ({{ task.reports|length }})</div>
+        <div class="mini-list">
+          {% for r in task.reports %}
+          <div class="mini-item">
+            <span class="avatar avatar-sm">{{ r.reporter.full_name[:1] }}</span>
+            <div>
+              <div><strong>{{ r.reporter.full_name }}</strong> <span class="muted small">{{ r.submitted_at | local_dt('%b %d, %I:%M %p') }}</span></div>
+              <div class="small">{{ r.notes or r.report_type }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-title">{{ icon('message') }} Activity</div>
+      {% if task.activity %}
+      <ol class="timeline">
+        {% for a in task.activity %}
+        <li class="tl-item {{ 'tl-comment' if a.change_type == 'comment' }}">
+          <span class="tl-dot"></span>
+          <div class="tl-body">
+            <div class="tl-head"><strong>{{ a.actor.full_name }}</strong> <span class="muted small">{{ a.timestamp | local_dt('%b %d, %I:%M %p') }}</span></div>
+            {% if a.change_type != 'comment' %}
+              <div class="change">{{ a.change_type|replace('_',' ')|capitalize }}: <span class="from">{{ a.previous_value or '—' }}</span> {{ icon('arrow-right') }} <span class="to">{{ a.new_value or '—' }}</span></div>
+            {% endif %}
+            {% if a.comment %}<div class="tl-text">{{ a.comment }}</div>{% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <p class="muted">No activity yet.</p>
+      {% endif %}
+
+      <form method="POST" enctype="multipart/form-data" class="comment-form">
+        <input type="hidden" name="action" value="comment">
+        <div class="field"><label for="comment">Add a note</label>
+          <textarea id="comment" name="comment" placeholder="Update or context for whoever picks this up next."></textarea>
+        </div>
+        <div class="comment-actions">
+          <label class="dropzone dropzone-sm">
+            <input type="file" id="photo" name="photo" accept="image/png,image/jpeg,image/gif,image/webp">
+            <span class="dz-icon">{{ icon('camera') }}</span>
+            <span class="dz-text"><strong>Attach photo</strong><span class="dz-name"></span></span>
+          </label>
+          <button type="submit" class="btn btn-primary">{{ icon('message') }} Add note</button>
+        </div>
+      </form>
+    </section>
   </div>
-  {% endif %}
 
   {% if can_manage %}
-  <div class="action-panel">
-    <div class="action-row">
+  <aside class="detail-side">
+    <section class="card action-panel">
+      <div class="card-title">{{ icon('wrench') }} Manage task</div>
+
       <form method="POST" class="inline-form">
         <input type="hidden" name="action" value="status">
         <div class="field"><label>Status</label>
@@ -89,9 +133,7 @@
         </div>
         <button type="submit" class="btn btn-ghost btn-sm">Update</button>
       </form>
-    </div>
 
-    <div class="action-row">
       <form method="POST" class="inline-form">
         <input type="hidden" name="action" value="assign">
         <div class="field"><label>Assign to</label>
@@ -110,9 +152,7 @@
         </div>
         <button type="submit" class="btn btn-ghost btn-sm">Set</button>
       </form>
-    </div>
 
-    <div class="action-row">
       <form method="POST" class="inline-form">
         <input type="hidden" name="action" value="work_order">
         <div class="field"><label>Work order #</label>
@@ -121,67 +161,40 @@
         <button type="submit" class="btn btn-ghost btn-sm">Save</button>
       </form>
 
-      {% if open_tasks_for_merge %}
-      <form method="POST" class="inline-form">
-        <input type="hidden" name="action" value="merge">
-        <div class="field"><label>Merge as duplicate of</label>
-          <select name="duplicate_of">
-            <option value="" disabled selected>Select a task</option>
-            {% for t in open_tasks_for_merge %}<option value="{{ t.id }}">{{ t.task_number }} — {{ t.category }}</option>{% endfor %}
-          </select>
+      <div class="panel-divider"></div>
+
+      {% if task.status != 'Resolved' and task.status != 'Closed' %}
+      <form method="POST" class="resolve-form">
+        <input type="hidden" name="action" value="resolve">
+        <div class="field"><label>Resolve with a note</label>
+          <textarea name="resolution" placeholder="What was done to resolve this?"></textarea>
         </div>
-        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Merge this task and cancel it?');">Merge</button>
+        <button type="submit" class="btn btn-success btn-block">{{ icon('check-circle') }} Mark resolved</button>
+      </form>
+      {% else %}
+      <form method="POST">
+        <input type="hidden" name="action" value="reopen">
+        <button type="submit" class="btn btn-ghost btn-block">Reopen</button>
       </form>
       {% endif %}
-    </div>
 
-    {% if task.status != 'Resolved' and task.status != 'Closed' %}
-    <form method="POST" style="max-width:520px;">
-      <input type="hidden" name="action" value="resolve">
-      <div class="field"><label>Resolve with a note</label>
-        <textarea name="resolution" placeholder="What was done to resolve this?"></textarea>
-      </div>
-      <button type="submit" class="btn btn-primary btn-sm">Mark resolved</button>
-    </form>
-    {% else %}
-    <form method="POST">
-      <input type="hidden" name="action" value="reopen">
-      <button type="submit" class="btn btn-ghost btn-sm">Reopen</button>
-    </form>
-    {% endif %}
-  </div>
-  {% endif %}
-</div>
-
-<div class="section-gap">
-  <div class="divider-label">Activity</div>
-  {% if task.activity %}
-  <div class="log">
-    {% for a in task.activity %}
-    <div class="log-entry">
-      <span class="who">{{ a.actor.full_name }}</span>
-      <span class="when">{{ a.timestamp | local_dt('%b %d, %I:%M %p') }}</span>
-      {% if a.change_type != 'comment' %}
-        <div class="change">{{ a.change_type|replace('_',' ')|capitalize }}: {{ a.previous_value or '—' }} → {{ a.new_value or '—' }}</div>
+      {% if open_tasks_for_merge %}
+      <details class="danger-zone">
+        <summary>{{ icon('link') }} Merge as duplicate…</summary>
+        <form method="POST" class="inline-form">
+          <input type="hidden" name="action" value="merge">
+          <div class="field"><label>Merge as duplicate of</label>
+            <select name="duplicate_of">
+              <option value="" disabled selected>Select a task</option>
+              {% for t in open_tasks_for_merge %}<option value="{{ t.id }}">{{ t.task_number }} — {{ t.category }}</option>{% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Merge this task and cancel it?');">Merge</button>
+        </form>
+      </details>
       {% endif %}
-      {% if a.comment %}<div class="body">{{ a.comment }}</div>{% endif %}
-    </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <p class="hint">No activity yet.</p>
+    </section>
+  </aside>
   {% endif %}
-
-  <form method="POST" enctype="multipart/form-data" style="max-width:520px; margin-top:16px;">
-    <input type="hidden" name="action" value="comment">
-    <div class="field"><label for="comment">Add a note</label>
-      <textarea id="comment" name="comment" placeholder="Update or context for whoever picks this up next."></textarea>
-    </div>
-    <div class="field">
-      <label for="photo">Photo (optional)</label>
-      <input type="file" id="photo" name="photo" accept="image/png,image/jpeg,image/gif,image/webp">
-    </div>
-    <button type="submit" class="btn btn-ghost">Add note</button>
-  </form>
 </div>
 {% endblock %}

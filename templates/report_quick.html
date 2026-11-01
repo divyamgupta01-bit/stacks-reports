@@ -1,68 +1,120 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}File a report{% endblock %}
+
+{% macro type_icon(label) -%}
+  {%- set l = label|lower -%}
+  {%- if 'cart' in l or 'pile' in l -%}{{ icon('cart') }}
+  {%- elif 'loose' in l or 'cleanup' in l -%}{{ icon('book') }}
+  {%- elif 'shelv' in l or 'shelf' in l -%}{{ icon('books') }}
+  {%- elif 'tidy' in l -%}{{ icon('sparkle') }}
+  {%- else -%}{{ icon('check') }}
+  {%- endif -%}
+{%- endmacro %}
 
 {% block content %}
 <div class="page-head">
-  <h1>File a report</h1>
+  <div>
+    <h1>File a report</h1>
+    <p class="page-sub">Log work you finished, or flag something for Stack Maintenance.</p>
+  </div>
 </div>
 
-{% if location %}
-  <div class="location-banner">
-    <div class="label">Location</div>
-    <div class="value">{{ location.display_name }}</div>
-    {% if location.zone_description %}<div class="hint">{{ location.zone_description }}</div>{% endif %}
-  </div>
-{% else %}
-  <div class="location-banner missing">
-    <div class="label">No location detected</div>
-    <div class="hint">Scan a posted QR code, or pick your location below.</div>
-  </div>
-{% endif %}
+<form method="POST" enctype="multipart/form-data" class="report-form">
+  <section class="step">
+    <div class="step-head"><span class="step-num">1</span><h2>Where are you?</h2></div>
+    {% if location %}
+      <div class="location-banner">
+        <span class="lb-icon">{{ icon('pin') }}</span>
+        <div>
+          <div class="label">{{ 'Scanned location' if qr else 'Location' }}</div>
+          <div class="value">{{ location.display_name }}</div>
+          {% if location.zone_description %}<div class="hint">{{ location.zone_description }}</div>{% endif %}
+        </div>
+        {% if qr %}<span class="chip chip-ok">{{ icon('qr') }} QR</span>{% endif %}
+      </div>
+    {% else %}
+      <div class="location-banner missing">
+        <span class="lb-icon">{{ icon('qr') }}</span>
+        <div>
+          <div class="label">No location detected</div>
+          <div class="hint">Scan a posted QR code, or pick your location below.</div>
+        </div>
+      </div>
+    {% endif %}
 
-<form method="POST" enctype="multipart/form-data">
-  {% if qr %}
-    <input type="hidden" name="qr_token" value="{{ qr.token }}">
-  {% elif location %}
-    <input type="hidden" name="location_id" value="{{ location.id }}">
-  {% else %}
-    <div class="field">
-      <label for="location_id">Location</label>
-      <select name="location_id" id="location_id" required>
-        <option value="" disabled selected>Select a location</option>
-        {% for loc in locations %}
-          <option value="{{ loc.id }}">{{ loc.display_name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-  {% endif %}
+    {% if qr %}
+      <input type="hidden" name="qr_token" value="{{ qr.token }}">
+    {% elif location %}
+      <input type="hidden" name="location_id" value="{{ location.id }}">
+    {% else %}
+      <div class="field">
+        <label for="location_id">Location</label>
+        <div class="input-icon">
+          {{ icon('pin') }}
+          <select name="location_id" id="location_id" required>
+            <option value="" disabled selected>Select a location</option>
+            {% for loc in locations %}
+              <option value="{{ loc.id }}">{{ loc.display_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    {% endif %}
+  </section>
 
-  <label>What did you do or find?</label>
-  <div class="type-grid">
-    {% for t in quick_types %}
-      <label class="type-option">
-        <input type="radio" name="report_type" value="{{ t }}" required> {{ t }}
+  <section class="step">
+    <div class="step-head"><span class="step-num">2</span><h2>What did you do or find?</h2></div>
+    <div class="type-grid">
+      {% for t in quick_types %}
+        <label class="type-option">
+          <input type="radio" name="report_type" value="{{ t }}" required>
+          <span class="to-icon">{{ type_icon(t) }}</span>
+          <span class="to-text">{{ t }}</span>
+          <span class="to-check">{{ icon('check') }}</span>
+        </label>
+      {% endfor %}
+      <label class="type-option followup">
+        <input type="radio" name="report_type" value="{{ followup_trigger }}" required>
+        <span class="to-icon">{{ icon('flag') }}</span>
+        <span class="to-text">{{ followup_trigger }}<small>Opens a short form to describe the issue</small></span>
+        <span class="to-check">{{ icon('arrow-right') }}</span>
       </label>
-    {% endfor %}
-    <label class="type-option followup">
-      <input type="radio" name="report_type" value="{{ followup_trigger }}" required> {{ followup_trigger }}
-    </label>
-  </div>
+    </div>
+  </section>
 
-  <div class="field">
-    <label for="quantity_estimate">Rough amount (optional)</label>
-    <input type="text" id="quantity_estimate" name="quantity_estimate" placeholder="e.g. one cart, two ranges">
-  </div>
+  <section class="step">
+    <details class="optional">
+      <summary>
+        <span class="step-num step-num-soft">3</span>
+        <span><strong>Add details</strong> <span class="muted">— amount, note, photo (optional)</span></span>
+        <span class="chev">{{ icon('down') }}</span>
+      </summary>
+      <div class="optional-body">
+        <div class="field">
+          <label for="quantity_estimate">Rough amount</label>
+          <input type="text" id="quantity_estimate" name="quantity_estimate" placeholder="e.g. one cart, two ranges">
+        </div>
 
-  <div class="field" style="max-width: 560px;">
-    <label for="notes">Note (optional)</label>
-    <textarea id="notes" name="notes" placeholder="Anything worth adding — this stays with the record."></textarea>
-  </div>
+        <div class="field">
+          <label for="notes">Note</label>
+          <textarea id="notes" name="notes" placeholder="Anything worth adding — this stays with the record."></textarea>
+        </div>
 
-  <div class="field">
-    <label for="photo">Photo (optional)</label>
-    <input type="file" id="photo" name="photo" accept="image/png,image/jpeg,image/gif,image/webp">
-  </div>
+        <div class="field">
+          <label>Photo</label>
+          <label class="dropzone">
+            <input type="file" id="photo" name="photo" accept="image/png,image/jpeg,image/gif,image/webp">
+            <span class="dz-icon">{{ icon('camera') }}</span>
+            <span class="dz-text"><strong>Take or choose a photo</strong><span class="dz-name"></span></span>
+          </label>
+        </div>
+      </div>
+    </details>
+  </section>
 
-  <button type="submit" class="btn btn-primary">Submit</button>
+  <div class="submit-bar">
+    <button type="submit" class="btn btn-primary btn-lg">{{ icon('check') }} Submit report</button>
+  </div>
 </form>
 {% endblock %}

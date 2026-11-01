@@ -1,46 +1,63 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}Bulletin board{% endblock %}
 
 {% block content %}
-<div class="page-head"><h1>Bulletin board</h1></div>
-<p class="hint" style="max-width:600px;">Current priorities and recent progress, at a glance — no reporter details or internal notes shown here.</p>
+<div class="page-head">
+  <div>
+    <h1>Bulletin board</h1>
+    <p class="page-sub">Current priorities and recent progress at a glance. No reporter details or internal notes are shown here.</p>
+  </div>
+</div>
 
-<div class="divider-label section-gap">Current priorities</div>
-{% if open_tasks %}
-<table class="ledger">
-  <thead><tr><th>Task</th><th>Category</th><th>Location</th><th>Severity</th><th>Status</th></tr></thead>
-  <tbody>
-    {% for t in open_tasks %}
-    <tr>
-      <td class="call">{{ t.task_number }}</td>
-      <td>{{ t.category }}</td>
-      <td>{{ t.location.display_name }}</td>
-      <td><span class="tag tag-severity-{{ t.severity|lower }}">{{ t.severity }}</span></td>
-      <td><span class="tag tag-status-{{ t.status|lower|replace(' ', '_') }}">{{ t.status }}</span></td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% else %}
-<div class="empty-state"><p>Nothing open right now.</p></div>
-{% endif %}
+<div class="bulletin-grid">
+  <section>
+    <div class="section-head">
+      <h2>{{ icon('flag') }} Current priorities</h2>
+      <span class="count-pill">{{ open_tasks|length }}</span>
+    </div>
+    {% if open_tasks %}
+    <div class="notice-list">
+      {% for t in open_tasks %}
+      <article class="notice sev-edge-{{ t.severity|lower }}">
+        <div class="notice-top">
+          <span class="call">{{ t.task_number }}</span>
+          <span class="tag tag-status-{{ t.status|lower|replace(' ', '_') }}">{{ t.status }}</span>
+        </div>
+        <h3>{{ t.category }}</h3>
+        <div class="notice-meta">
+          <span class="with-icon">{{ icon('pin') }}{{ t.location.display_name }}</span>
+          <span class="tag tag-severity-{{ t.severity|lower }}"><i class="dot"></i>{{ t.severity }}</span>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state empty-sm"><span class="empty-icon">{{ icon('check-circle') }}</span><p>Nothing open right now.</p></div>
+    {% endif %}
+  </section>
 
-<div class="divider-label section-gap">Recently completed</div>
-{% if recently_done %}
-<table class="ledger">
-  <thead><tr><th>Task</th><th>Category</th><th>Location</th><th>Completed</th></tr></thead>
-  <tbody>
-    {% for t in recently_done %}
-    <tr>
-      <td class="call">{{ t.task_number }}</td>
-      <td>{{ t.category }}</td>
-      <td>{{ t.location.display_name }}</td>
-      <td>{{ t.updated_at | local_dt('%b %d') }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-{% else %}
-<div class="empty-state"><p>Nothing completed in the last two weeks.</p></div>
-{% endif %}
+  <section>
+    <div class="section-head">
+      <h2>{{ icon('check-circle') }} Recently completed</h2>
+      <span class="count-pill count-pill-ok">{{ recently_done|length }}</span>
+    </div>
+    {% if recently_done %}
+    <div class="done-list">
+      {% for t in recently_done %}
+      <div class="done-item">
+        <span class="done-check">{{ icon('check') }}</span>
+        <div>
+          <div class="done-title">{{ t.category }}</div>
+          <div class="muted small"><span class="mono">{{ t.task_number }}</span> · {{ t.location.display_name }}</div>
+        </div>
+        <span class="muted small nowrap">{{ t.updated_at | local_dt('%b %d') }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state empty-sm"><p>Nothing completed in the last two weeks.</p></div>
+    {% endif %}
+  </section>
+</div>
 {% endblock %}

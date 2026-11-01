@@ -1,51 +1,84 @@
-<!DOCTYPE html>
+{% from "_icons.html" import icon %}<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0e1a2b">
   <title>Sign in · Stack Maintenance Reports</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3">
 </head>
-<body>
-  <div class="login-screen">
-    <div class="login-card">
-      <span class="mark">Z 731 .S73</span>
-      <h1>Stack Maintenance</h1>
-      <p class="sub">Pick your name and enter your PIN to continue.</p>
+<body class="auth-body">
+  <div class="auth">
+    <section class="auth-hero">
+      <div class="auth-hero-inner">
+        <span class="logo-mark logo-mark-lg">{{ icon('books') }}</span>
+        <h2>Keep the stacks in shape, together.</h2>
+        <p>Log routine work in two taps, flag anything that needs follow-up, and see what Stack Maintenance is working on.</p>
+        <ul class="auth-points">
+          <li>{{ icon('qr') }} Scan the QR code posted at your location</li>
+          <li>{{ icon('camera') }} Add a photo straight from your phone</li>
+          <li>{{ icon('clock') }} Follow each issue until it's resolved</li>
+        </ul>
+      </div>
+      <span class="auth-callno">Z 731 .S73</span>
+    </section>
 
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="flashes">
-            {% for category, message in messages %}
-              <div class="flash {{ category }}">{{ message }}</div>
-            {% endfor %}
+    <section class="auth-panel">
+      <div class="login-card">
+        <span class="logo-mark auth-mobile-mark">{{ icon('books') }}</span>
+        <h1>Sign in</h1>
+        <p class="sub">Pick your name and enter your 4-digit PIN.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flashes">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}" role="status">
+                  {{ icon('check-circle' if category == 'success' else ('alert' if category == 'error' else 'info')) }}
+                  <span>{{ message }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% if people %}
+        <form method="POST">
+          <div class="field">
+            <label for="user_id">Name</label>
+            <div class="input-icon">
+              {{ icon('user') }}
+              <select id="user_id" name="user_id" required autofocus>
+                <option value="" disabled selected>Select your name</option>
+                {% for person in people %}
+                  <option value="{{ person.id }}">{{ person.full_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="pin">PIN</label>
+            <div class="input-icon">
+              {{ icon('lock') }}
+              <input type="password" id="pin" name="pin" inputmode="numeric" pattern="[0-9]{4}"
+                     maxlength="4" placeholder="••••" autocomplete="off" class="pin-input" required>
+            </div>
+            <p class="hint">The last 4 digits of your student ID.</p>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg">Sign in {{ icon('arrow-right') }}</button>
+        </form>
+        {% else %}
+          <div class="callout callout-info">
+            {{ icon('info') }}
+            <p>No accounts have been set up yet. Ask whoever installed this to run
+            <code>flask init-db</code> to create the first admin account.</p>
           </div>
         {% endif %}
-      {% endwith %}
-
-      {% if people %}
-      <form method="POST">
-        <div class="field">
-          <label for="user_id">Name</label>
-          <select id="user_id" name="user_id" required autofocus>
-            <option value="" disabled selected>Select your name</option>
-            {% for person in people %}
-              <option value="{{ person.id }}">{{ person.full_name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="field">
-          <label for="pin">PIN</label>
-          <input type="password" id="pin" name="pin" inputmode="numeric" pattern="[0-9]{4}"
-                 maxlength="4" placeholder="Last 4 of your student ID" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Sign in</button>
-      </form>
-      {% else %}
-        <p class="hint">No accounts have been set up yet. Ask whoever installed this to run
-        <code>flask init-db</code> to create the first admin account.</p>
-      {% endif %}
-    </div>
+      </div>
+    </section>
   </div>
 </body>
 </html>

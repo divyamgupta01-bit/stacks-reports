@@ -1,53 +1,71 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}People{% endblock %}
 
 {% block content %}
-<div class="page-head"><h1>People</h1></div>
+<div class="page-head">
+  <div>
+    <h1>People</h1>
+    <p class="page-sub">Everyone who can sign in, their role, and PIN resets.</p>
+  </div>
+  <span class="count-pill">{{ users|length }} account{{ 's' if users|length != 1 }}</span>
+</div>
 
-<table class="roster">
-  <thead>
-    <tr><th>Name</th><th>Role</th><th>Added</th><th>Reset PIN</th><th></th></tr>
-  </thead>
-  <tbody>
-    {% for u in users %}
-    <tr>
-      <td>{{ u.full_name }}{% if u.is_locked() %}<br><span class="hint" style="color:var(--flag);">Locked</span>{% endif %}</td>
-      <td>{{ role_labels.get(u.role, u.role) }} {% if u.is_admin %}<span class="badge-admin">Admin</span>{% endif %}</td>
-      <td>{{ u.created_at | local_dt('%b %d, %Y') }}</td>
-      <td>
-        <form method="POST" action="{{ url_for('admin.reset_pin', user_id=u.id) }}" class="actions-row">
-          <input type="password" name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="New PIN" required style="width:120px;">
-          <button type="submit" class="btn btn-ghost btn-sm">Reset</button>
-        </form>
-      </td>
-      <td>
-        {% if u.id != current_user.id %}
-        <form method="POST" action="{{ url_for('admin.delete_user', user_id=u.id) }}" onsubmit="return confirm('Remove {{ u.full_name }}\'s account?');">
-          <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-        </form>
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="admin-layout">
+  <div class="table-card">
+  <table class="roster ledger-stack">
+    <thead>
+      <tr><th>Name</th><th>Role</th><th>Added</th><th>Reset PIN</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td data-label="Name">
+          <span class="person"><span class="avatar">{{ u.full_name[:1] }}</span>
+            <span><strong>{{ u.full_name }}</strong>{% if u.is_locked() %}<br><span class="tag tag-status-cancelled tag-locked">{{ icon('lock') }} Locked</span>{% endif %}</span>
+          </span>
+        </td>
+        <td data-label="Role">{{ role_labels.get(u.role, u.role) }} {% if u.is_admin %}<span class="badge-admin">Admin</span>{% endif %}</td>
+        <td data-label="Added" class="muted nowrap">{{ u.created_at | local_dt('%b %d, %Y') }}</td>
+        <td data-label="Reset PIN">
+          <form method="POST" action="{{ url_for('admin.reset_pin', user_id=u.id) }}" class="actions-row">
+            <input type="password" name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="New PIN" required class="pin-sm">
+            <button type="submit" class="btn btn-ghost btn-sm">{{ icon('key') }} Reset</button>
+          </form>
+        </td>
+        <td data-label="" class="cell-actions">
+          {% if u.id != current_user.id %}
+          <form method="POST" action="{{ url_for('admin.delete_user', user_id=u.id) }}" onsubmit="return confirm('Remove {{ u.full_name }}\'s account?');">
+            <button type="submit" class="btn btn-danger btn-sm">{{ icon('trash') }} Remove</button>
+          </form>
+          {% else %}<span class="muted small">You</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
 
-<div class="divider-label">Add a person</div>
-<form method="POST" style="max-width: 420px;">
-  <div class="field"><label for="full_name">Full name</label><input type="text" id="full_name" name="full_name" required></div>
-  <div class="field"><label for="role">Role</label>
-    <select name="role" id="role" required>
-      {% for r in roles %}<option value="{{ r }}">{{ role_labels.get(r, r) }}</option>{% endfor %}
-    </select>
-  </div>
-  <div class="field"><label for="pin">PIN</label>
-    <input type="password" id="pin" name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required>
-    <p class="hint">Exactly 4 digits — last 4 of their student ID works well.</p>
-  </div>
-  <div class="field checkbox-row">
-    <input type="checkbox" id="is_admin" name="is_admin">
-    <label for="is_admin" style="margin:0;">Give this account admin access</label>
-  </div>
-  <button type="submit" class="btn btn-primary">Create account</button>
-</form>
+  <section class="card form-card">
+    <div class="card-title">{{ icon('plus') }} Add a person</div>
+    <form method="POST">
+      <div class="field"><label for="full_name">Full name</label><input type="text" id="full_name" name="full_name" required></div>
+      <div class="field"><label for="role">Role</label>
+        <select name="role" id="role" required>
+          {% for r in roles %}<option value="{{ r }}">{{ role_labels.get(r, r) }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="field"><label for="pin">PIN</label>
+        <input type="password" id="pin" name="pin" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required>
+        <p class="hint">Exactly 4 digits — last 4 of their student ID works well.</p>
+      </div>
+      <label class="switch-row" for="is_admin">
+        <input type="checkbox" id="is_admin" name="is_admin">
+        <span class="switch"></span>
+        <span>Give this account admin access</span>
+      </label>
+      <button type="submit" class="btn btn-primary btn-block">Create account</button>
+    </form>
+  </section>
+</div>
 {% endblock %}

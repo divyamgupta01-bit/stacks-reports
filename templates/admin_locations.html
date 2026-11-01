@@ -1,35 +1,52 @@
 {% extends "base.html" %}
+{% from "_icons.html" import icon %}
 {% block title %}Locations{% endblock %}
 
 {% block content %}
-<div class="page-head"><h1>Locations</h1></div>
+<div class="page-head">
+  <div>
+    <h1>Locations</h1>
+    <p class="page-sub">Places people can report from. Each one can have its own QR codes.</p>
+  </div>
+  <span class="count-pill">{{ locations|length }} location{{ 's' if locations|length != 1 }}</span>
+</div>
 
-<table class="roster">
-  <thead><tr><th>Name</th><th>Building / Floor</th><th>Zone</th><th>Status</th><th>QR codes</th><th></th></tr></thead>
-  <tbody>
+<div class="admin-layout">
+  <div class="loc-grid">
     {% for l in locations %}
-    <tr>
-      <td>{{ l.name }}</td>
-      <td>{{ l.building or '—' }} {{ l.floor or '' }}</td>
-      <td>{{ l.zone_description or '—' }}</td>
-      <td><span class="tag {{ 'tag-status-new' if l.active else 'tag-status-cancelled' }}">{{ 'Active' if l.active else 'Inactive' }}</span></td>
-      <td><a href="{{ url_for('admin.qrcodes', location_id=l.id) }}">Manage ({{ l.qr_codes|length }})</a></td>
-      <td>
+    <article class="loc-card {{ 'is-inactive' if not l.active }}">
+      <div class="loc-top">
+        <span class="lb-icon">{{ icon('pin') }}</span>
+        <span class="tag {{ 'tag-status-resolved' if l.active else 'tag-status-cancelled' }}">{{ 'Active' if l.active else 'Inactive' }}</span>
+      </div>
+      <h3>{{ l.name }}</h3>
+      <dl class="loc-meta">
+        <div><dt>Building / floor</dt><dd>{{ l.building or '—' }} {{ l.floor or '' }}</dd></div>
+        <div><dt>Zone</dt><dd>{{ l.zone_description or '—' }}</dd></div>
+      </dl>
+      <div class="loc-actions">
+        <a href="{{ url_for('admin.qrcodes', location_id=l.id) }}" class="btn btn-ghost btn-sm">{{ icon('qr') }} QR codes ({{ l.qr_codes|length }})</a>
         <form method="POST" action="{{ url_for('admin.toggle_location', location_id=l.id) }}">
-          <button type="submit" class="btn btn-ghost btn-sm">{{ 'Deactivate' if l.active else 'Activate' }}</button>
+          <button type="submit" class="btn btn-quiet btn-sm">{{ 'Deactivate' if l.active else 'Activate' }}</button>
         </form>
-      </td>
-    </tr>
+      </div>
+    </article>
+    {% else %}
+    <div class="empty-state"><span class="empty-icon">{{ icon('pin') }}</span><p>No locations yet.</p></div>
     {% endfor %}
-  </tbody>
-</table>
+  </div>
 
-<div class="divider-label">Add a location</div>
-<form method="POST" style="max-width: 460px;">
-  <div class="field"><label for="name">Name</label><input type="text" id="name" name="name" placeholder="e.g. 3rd Floor — East Stacks" required></div>
-  <div class="field"><label for="building">Building</label><input type="text" id="building" name="building"></div>
-  <div class="field"><label for="floor">Floor</label><input type="text" id="floor" name="floor"></div>
-  <div class="field"><label for="zone_description">Zone / call-number range</label><input type="text" id="zone_description" name="zone_description" placeholder="e.g. PR–PS"></div>
-  <button type="submit" class="btn btn-primary">Add location</button>
-</form>
+  <section class="card form-card">
+    <div class="card-title">{{ icon('plus') }} Add a location</div>
+    <form method="POST">
+      <div class="field"><label for="name">Name</label><input type="text" id="name" name="name" placeholder="e.g. 3rd Floor — East Stacks" required></div>
+      <div class="field-grid field-grid-2">
+        <div class="field"><label for="building">Building</label><input type="text" id="building" name="building"></div>
+        <div class="field"><label for="floor">Floor</label><input type="text" id="floor" name="floor"></div>
+      </div>
+      <div class="field"><label for="zone_description">Zone / call-number range</label><input type="text" id="zone_description" name="zone_description" placeholder="e.g. PR–PS"></div>
+      <button type="submit" class="btn btn-primary btn-block">Add location</button>
+    </form>
+  </section>
+</div>
 {% endblock %}

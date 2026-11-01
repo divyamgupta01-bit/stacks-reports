@@ -1,17 +1,22 @@
-<!DOCTYPE html>
+{% from "_icons.html" import icon %}<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>{{ code }} · Stack Maintenance Reports</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=3">
 </head>
-<body>
-  <div class="login-screen">
-    <div class="login-card">
-      <span class="mark">{{ code }}</span>
+<body class="auth-body">
+  <div class="error-screen">
+    <div class="error-card">
+      <span class="error-code">{{ code }}</span>
+      <div class="error-shelf" aria-hidden="true"><i></i><i></i><i class="gap"></i><i></i><i></i><i></i></div>
       <h1>{{ message }}</h1>
-      <a href="{{ url_for('tasks.queue') }}" class="btn btn-ghost" style="text-align:center;">Back to queue</a>
+      <p class="sub">This one's not on the shelf. Head back to the queue and pick up from there.</p>
+      <a href="{{ url_for('tasks.queue') }}" class="btn btn-primary">{{ icon('arrow-left') }} Back to queue</a>
     </div>
   </div>
 </body>
